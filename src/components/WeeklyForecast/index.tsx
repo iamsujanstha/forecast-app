@@ -26,7 +26,7 @@ function WeeklyForecast() {
     {
       header: 'Day',
       accessorKey: 'date',
-      cell: info => dayjs(info.getValue() as string).format('ddd'),
+      cell: info => dayjs(info.getValue() as string).format('dddd'),
     },
     {
       header: 'Condition',
