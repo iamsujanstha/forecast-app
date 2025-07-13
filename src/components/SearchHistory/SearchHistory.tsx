@@ -9,10 +9,16 @@ import SearchHistoryItem from "./components/SearchHistoryItem";
 import { CircularProgress } from "@mui/material";
 
 const LOCAL_STORAGE_KEY = "searchHistory";
+const LAST_SEARCHED_KEY = "lastSearchedCity";
 
 function SearchHistory() {
-  const [inputValue, setInputValue] = useState("");
-  const [history, setHistory] = useState<string[]>([]);
+  const [inputValue, setInputValue] = useState(
+    localStorage.getItem(LAST_SEARCHED_KEY) || ''
+  );
+  const [history, setHistory] = useState<string[]>(() => {
+    const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
+    return saved ? JSON.parse(saved) : [];
+  });
   const [options, setOptions] = useState<string[]>([]);
   const [deletedCity, setDeletedCity] = useState<string | null>(null);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
@@ -22,9 +28,17 @@ function SearchHistory() {
   const [searchCities, { data: searchResults, isFetching }] = useLazySearchCitiesQuery();
   const debouncedInput = useDebounce(inputValue, 400);
 
+  // Load history from localStorage on initial render
   useEffect(() => {
-    const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
-    if (saved) setHistory(JSON.parse(saved));
+    const savedHistory = localStorage.getItem(LOCAL_STORAGE_KEY);
+    if (savedHistory) {
+      setHistory(JSON.parse(savedHistory));
+    }
+
+    const lastSearched = localStorage.getItem(LAST_SEARCHED_KEY);
+    if (lastSearched) {
+      setInputValue(lastSearched);
+    }
   }, []);
 
   useEffect(() => {
@@ -52,43 +66,54 @@ function SearchHistory() {
     const trimmed = city.trim();
     if (!trimmed) return;
 
-    setHistory((prev) => {
-      const filtered = prev.filter(
-        (c) => c.toLowerCase() !== trimmed.toLowerCase()
-      );
-		const newHistory = [trimmed, ...filtered]
-		localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(newHistory));
-      return newHistory;
-    });
+    const newHistory = [trimmed, ...history.filter(
+      (c) => c.toLowerCase() !== trimmed.toLowerCase()
+    )];
 
+    // Update both history and last searched city in localStorage
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(newHistory));
+    localStorage.setItem(LAST_SEARCHED_KEY, trimmed);
+
+    setHistory(newHistory);
     setCity(trimmed);
-    setInputValue("");
+    setInputValue(trimmed); // Keep the searched city in the input field
   };
 
   const handleSnackbarOpen = useCallback((open: boolean) => {
-	 setSnackbarOpen(open);
+    setSnackbarOpen(open);
   }, []);
 
   const handleDelete = useCallback((city: string) => {
-	 setHistory((prev) => prev.filter((c) => c !== city));
-	 setDeletedCity(city);
-	 handleSnackbarOpen(true);
-  }, [handleSnackbarOpen]);
+    const newHistory = history.filter((c) => c !== city);
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(newHistory));
 
+    // If the deleted city was the last searched, clear it
+    if (localStorage.getItem(LAST_SEARCHED_KEY) === city) {
+      localStorage.removeItem(LAST_SEARCHED_KEY);
+      setInputValue("");
+    }
+
+    setHistory(newHistory);
+    setDeletedCity(city);
+    handleSnackbarOpen(true);
+  }, [history, handleSnackbarOpen]);
 
   const handleUndo = useCallback(() => {
     if (deletedCity) {
-      setHistory((prev) => [deletedCity, ...prev]);
+      const newHistory = [deletedCity, ...history];
+      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(newHistory));
+      setHistory(newHistory);
       setDeletedCity(null);
       handleSnackbarOpen(false);
     }
-  }, [deletedCity, handleSnackbarOpen])
+  }, [deletedCity, history, handleSnackbarOpen]);
 
   return (
     <>
       <Autocomplete
         options={options}
         inputValue={inputValue}
+        value={inputValue} // Add this to control the selected value
         onInputChange={(_, newInputValue) => setInputValue(newInputValue)}
         loading={isFetching}
         onChange={(_, newValue) => {
@@ -106,11 +131,12 @@ function SearchHistory() {
           />
         )}
         renderInput={(params) => (
-          <TextField
-            {...params}
-            label="Search for a city"
-            slotProps={{
-              input: {
+          <>
+            <TextField
+              {...params}
+              label="Search for a city"
+              sx={{ marginBottom: '1rem' }}
+              InputProps={{
                 ...params.InputProps,
                 endAdornment: (
                   <>
@@ -120,9 +146,9 @@ function SearchHistory() {
                     {params.InputProps.endAdornment}
                   </>
                 ),
-              },
-            }}
-          />
+              }}
+            />
+          </>
         )}
       />
 

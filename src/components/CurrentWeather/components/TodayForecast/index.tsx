@@ -4,13 +4,16 @@ import dayjs from "dayjs";
 import { memo } from "react";
 import type { WeatherResponse } from "../../../../types/WeatherResponse";
 
-const StyledWeatherBox = styled(Box)`
-  width: 100%;
-  background-color: #ffffff1a;
-  padding: 16px;
-  border-radius: 8px;
-  text-align: center;
-`;
+const StyledWeatherBox = styled(Box)(({ theme }) => ({
+  width: '100%',
+  backgroundColor: theme.palette.mode === 'light'
+    ? 'rgba(189, 189, 189, 0.7)'
+    : '#ffffff1a',
+  padding: '16px',
+  borderRadius: '8px',
+  textAlign: 'center',
+  color: theme.palette.text.primary, // ensures text color adapts to theme
+}));
 
 function TodayForecast({ data }: { data: WeatherResponse }) {
   const hours = data?.forecast?.forecastday[0]?.hour || [];
@@ -21,14 +24,14 @@ function TodayForecast({ data }: { data: WeatherResponse }) {
   });
 
   return (
-    <Box>
+    <>
       <BlockHeader variant="h6" sx={{ marginBottom: "20px" }}>
         Today Forecast
       </BlockHeader>
       <Grid
         container
         spacing={2}
-        sx={{ alignItems: "center", justifyContent: "center" }}
+        sx={{ alignItems: "center", justifyContent: "center", marginBottom: '1rem' }}
       >
         {filteredHours.map((hour) => (
           <Grid size={{ xs: 3 }} key={hour.time}>
@@ -47,7 +50,7 @@ function TodayForecast({ data }: { data: WeatherResponse }) {
           </Grid>
         ))}
       </Grid>
-    </Box>
+    </>
   );
 }
 

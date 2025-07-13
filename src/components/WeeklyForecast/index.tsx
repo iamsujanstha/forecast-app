@@ -1,4 +1,4 @@
-import { styled } from "@mui/material";
+import { Box, styled } from "@mui/material";
 import BlockHeader from "../shared/BlockHeader";
 import { useGetForecastQuery } from "../../services/weather";
 import useCity from "../../hooks/useCity";
@@ -12,6 +12,7 @@ import {
 } from '@tanstack/react-table';
 import type { ColumnDef } from '@tanstack/react-table';
 import dayjs from "dayjs";
+import Navigation from "../Navigation/Navigation";
 
 
 function WeeklyForecast() {
@@ -20,7 +21,6 @@ function WeeklyForecast() {
     city ? { city } : skipToken
   );
   const forecastday = data?.forecast?.forecastday || [];
-
   // Define columns
   const columns: ColumnDef<any>[] = [
     {
@@ -30,8 +30,35 @@ function WeeklyForecast() {
     },
     {
       header: 'Condition',
-      accessorKey: 'day.condition.text',
-      cell: info => info.getValue(),
+      accessorKey: 'day.condition',
+      cell: info => {
+        const condition = info.getValue() as {
+          text: string;
+          icon: string;
+          code: number;
+        };
+
+        return (
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '8px',
+            minWidth: '150px' // Ensure consistent width
+          }}>
+            <img
+              src={`https:${condition.icon}`} // Add https: prefix if needed
+              alt={condition.text}
+              style={{
+                width: '40px',
+                height: '40px',
+                objectFit: 'contain'
+              }}
+            />
+            <span>{condition.text}</span>
+          </div>
+        );
+      },
     },
     {
       header: 'Max Temp',
@@ -58,7 +85,8 @@ function WeeklyForecast() {
   }
 
   return (
-    <>
+    <Box sx={{ position: 'relative' }}>
+      <Navigation />
       <BlockHeader variant="h6">Weekly Forecast</BlockHeader>
       <Table>
         <thead>
@@ -90,7 +118,7 @@ function WeeklyForecast() {
           ))}
         </tbody>
       </Table>
-    </>
+    </Box>
   );
 }
 

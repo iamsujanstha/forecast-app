@@ -1,4 +1,4 @@
-import { Box, Container, IconButton, ThemeProvider, Grid, styled, CssBaseline } from "@mui/material"
+import { Box, Container, IconButton, ThemeProvider, styled, CssBaseline } from "@mui/material"
 import { getTheme } from "./theme";
 import SearchHistory from "./components/SearchHistory/SearchHistory";
 import CurrentWeather from "./components/CurrentWeather";
@@ -8,6 +8,7 @@ import NotificationAlert from "./components/shared/NotificationAlert";
 import Brightness4Icon from '@mui/icons-material/Brightness4';
 import Brightness7Icon from '@mui/icons-material/Brightness7';
 import { useState, useMemo, useEffect } from "react";
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 
 const StyledContainer = styled(Container)(() => ({
   minHeight: '100vh',
@@ -50,34 +51,26 @@ function App() {
 
   return (
     <ThemeProvider theme={theme}>
-      <CssBaseline /> {/* Important for baseline styles */}
-      <CityProvider>
-        <NotificationAlert />
-        <StyledContainer>
-          <StyledWrapper>
-            <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-              <IconButton onClick={toggleColorMode} color="inherit">
-                {mode === 'dark' ? <Brightness7Icon /> : <Brightness4Icon />}
-              </IconButton>
-            </Box>
-            <SearchHistory />
-            <Grid container spacing={5} sx={{ marginTop: "30px" }}>
-              <Grid
-                sx={{
-                  display: "flex",
-                  flexDirection: "column",
-                  rowGap: "50px",
-                }}
-              >
-                <CurrentWeather />
-              </Grid>
-              <Grid sx={{ width: '100%' }}>
-                <WeeklyForecast />
-              </Grid>
-            </Grid>
-          </StyledWrapper>
-        </StyledContainer>
-      </CityProvider>
+      <Router>
+        <CssBaseline />
+        <CityProvider>
+          <NotificationAlert />
+          <StyledContainer>
+            <StyledWrapper>
+              <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+                <IconButton onClick={toggleColorMode} color="inherit">
+                  {mode === 'dark' ? <Brightness7Icon /> : <Brightness4Icon />}
+                </IconButton>
+              </Box>
+              <SearchHistory />
+              <Routes>
+                <Route path="/" element={<CurrentWeather />} />
+                <Route path="/weekly-forecast" element={<WeeklyForecast />} />
+              </Routes>
+            </StyledWrapper>
+          </StyledContainer>
+        </CityProvider>
+      </Router>
     </ThemeProvider>
   );
 }
